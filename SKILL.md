@@ -6,7 +6,7 @@ description: Architecture rules, naming conventions, and CQRS handler patterns f
 # Project Conventions
 
 This file defines how code is written in this codebase. It is not a general
-C#/.NET style guide — it encodes the specific decisions this project has
+C#/.NET style guide, it encodes the specific decisions this project has
 already made, so an AI agent (or a new engineer) produces code that looks
 like it was written by the same team, not a tutorial.
 
@@ -75,11 +75,11 @@ Rules:
   `Handlers/`, `Validators/` top-level folders).
 - Handlers are `sealed` and take dependencies via primary constructor.
 - Queries never touch `IUnitOfWork` or call `SaveChangesAsync`.
-- Commands return `Result<T>` (or `Result` for no payload) — see §3. They
+- Commands return `Result<T>` (or `Result` for no payload), see §3. They
   do not throw for expected failures (validation, not-found, business
   rule violations). Exceptions are reserved for truly unexpected failures.
 
-## 3. Result Pattern — No Exceptions for Control Flow
+## 3. Result Pattern: No Exceptions for Control Flow
 
 All `Application` layer operations that can fail in an expected way return
 `Result` / `Result<T>`, never throw.
@@ -110,7 +110,7 @@ public class Result<T>
 | Validators | `{CommandOrQueryName}Validator` | `CreateOrderValidator` |
 | DTOs (outbound) | `{Noun}Dto` / `{Noun}Response` | `OrderResponse` |
 | DTOs (inbound) | `{Noun}Request` | `CreateOrderRequest` |
-| Interfaces | `I{Noun}` — no `Async` suffix on the interface name itself | `IOrderRepository` |
+| Interfaces | `I{Noun}`, no `Async` suffix on the interface name itself | `IOrderRepository` |
 | Async methods | Always suffixed `Async` | `SaveChangesAsync` |
 | Private fields | `_camelCase` | `_orderRepository` |
 | EF Core entities | Singular noun, no `Entity` suffix | `Order`, not `OrderEntity` |
@@ -119,12 +119,12 @@ public class Result<T>
 
 - **No N+1 queries.** Use `.Include()`/`.ThenInclude()` or projection
   (`.Select()` into a DTO) for anything that will access related data.
-  Prefer projection over `Include` for read-only queries — it avoids
+  Prefer projection over `Include` for read-only queries: it avoids
   pulling entire entity graphs for data you only display.
 - **Queries are `AsNoTracking()` by default.** Only track entities on the
   write path where you intend to call `SaveChangesAsync`.
 - **No repository methods that return `IQueryable<T>`** across a layer
-  boundary — evaluate the query and return concrete data before leaving
+  boundary. Evaluate the query and return concrete data before leaving
   `Infrastructure`.
 - Migrations are named `{Timestamp}_{PastTenseDescription}`, e.g.
   `20260107_AddedOrderStatusColumn`.
@@ -132,10 +132,10 @@ public class Result<T>
 ## 6. Testing
 
 - Unit tests target `Application` handlers with mocked/in-memory
-  repositories — no real database.
+  repositories, no real database.
 - Integration tests use a real database (Testcontainers or LocalDB), never
   a mocked `DbContext`. Mocking EF Core behavior has previously hidden real
-  migration/tracking bugs — don't reintroduce that gap.
+  migration/tracking bugs, don't reintroduce that gap.
 - Test naming: `MethodOrHandlerName_Scenario_ExpectedOutcome`, e.g.
   `CreateOrderHandler_WhenCustomerMissing_ReturnsFailure`.
 
@@ -145,15 +145,15 @@ public class Result<T>
   service locator) unless at least three concrete cases already need it.
 - Do not add `try/catch` around code that can't actually throw in a way
   the caller can meaningfully recover from.
-- Do not use `AutoMapper`/reflection-based mapping for simple DTOs — hand
+- Do not use `AutoMapper`/reflection-based mapping for simple DTOs, hand
   write the mapping or use a static `ToDto()` extension method. Keeps
   mapping logic debuggable and avoids hidden reflection cost.
-- Do not put configuration values, connection strings, or secrets in code
-  — `IOptions<T>` bound from configuration only.
+- Do not put configuration values, connection strings, or secrets in code.
+  Use `IOptions<T>` bound from configuration only.
 
 ---
 
 *Copy this file into your project root as `SKILL.md` (or your agent's
-equivalent skill file). Edit §1–§7 to match your actual decisions — the
+equivalent skill file). Edit §1-§7 to match your actual decisions. The
 value isn't this exact content, it's having your team's real conventions
 written down so your AI agent stops guessing.*
